@@ -55,5 +55,10 @@
   },
   "peerDependencies": {
     "react": "^18.2.0"
+  },
+  "scripts": {
+    "build": "node tools/build-client.mjs",
+    "smoke": "node tools/smoke-client.mjs",
+    "check": "node tools/build-client.mjs && node --check lib/client.js && node tools/smoke-client.mjs"
   }
 }

@@ -52,10 +52,11 @@ One package, two halves:
 | `lib/client.js` | browser half — shadows the `sidebar.workspaces` seat and renders the meta-folder browser |
 | `client.js` | **source of truth** (dynamic-Cordis form, also usable with the `cordis_define` runtime tool) |
 
-`lib/client.js` is generated from `client.js`; regenerate after editing it:
+`lib/client.js` is generated from `client.js`; regenerate and check it after
+editing:
 
 ```sh
-node tools/build-client.mjs
+npm run check     # build + syntax + export smoke test
 ```
 
 ### As a web-profile package
