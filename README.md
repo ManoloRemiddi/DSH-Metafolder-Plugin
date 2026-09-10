@@ -20,6 +20,10 @@ the folders are visualised**:
   on the list background to take it out again.
 - **Row menu**: `→ <meta folder>` to file, `Remove from meta folder` to unfile,
   plus rename / move up / move down, and delete workspace.
+- **Per-folder colour**: pick it when you create the folder — an eight-swatch
+  palette, the theme colour, or a custom colour — and change it any time from
+  *Rename meta folder*. The colour tints the folder glyph, its label, and the
+  drop-target outline.
 - **View options** (the shipped menu, preserved): group by **Workspace** /
   **Flat**, order by **Manual** / **Updated**. Manual order honours the order
   already stored by the shipped browser (`dsh.workspace.view.v5`).
@@ -30,6 +34,13 @@ the folders are visualised**:
 
 Everything the shipped browser offered is still here — the meta-folder layer is
 an addition to the toolbar, not a replacement.
+
+## Requirements
+
+- DeepSeek Harness `>= 0.1.5-rc.1` on the `web` profile.
+- The shipped `@deepseek-ai/dsh-client-ui-sidebar` and
+  `@deepseek-ai/dsh-client-ui-workspace` client packages (the seat it shadows).
+- Node `^22.19.0 || >=24.0.0` to build the browser half.
 
 ## Install
 
