@@ -20,6 +20,9 @@ return {
     const LS_SHIPPED = 'dsh.workspace.view.v5'
     const LIMIT5 = 5
     const SEARCH_MS = 250
+    // Curated meta-folder colours: mid-tone hues that stay legible on both the
+    // light and the dark DSH theme.
+    const META_COLORS = ['#e5484d', '#f76b15', '#ffb224', '#46a758', '#12a594', '#0091ff', '#8e4ec6', '#e93d82']
 
     // ---------- own labels (the `workspace` ns stays the shipped one) ----------
     const DICT = {
@@ -33,6 +36,7 @@ return {
         emptyGroup: 'empty',
         dndHint: 'Drag a workspace folder onto a meta folder to file it — drop it here to take it out.',
         dndNoMeta: 'No meta folder yet — create one with the folder + button, then drag workspaces into it.',
+        colorLabel: 'Colour', colorAria: 'Use colour {color}', colorDefault: 'Theme colour', colorCustom: 'Custom colour',
       },
       zh: {
         newGroup: '新建分组', create: '创建', folderName: '分组名称',
@@ -43,6 +47,8 @@ return {
         deleteGroupDesc: '将移除该分组文件夹。工作区文件夹保持原位并回到主列表。',
         emptyGroup: '空',
         dndHint: '把工作区文件夹拖到分组文件夹即可归类；拖到此处可移出。',
+        dndNoMeta: '还没有分组文件夹——先用文件夹 + 按钮创建，再拖入工作区。',
+        colorLabel: '颜色', colorAria: '使用颜色 {color}', colorDefault: '主题色', colorCustom: '自定义颜色',
       },
     }
     let lang = 'en'
@@ -68,7 +74,12 @@ return {
         if (raw !== null && typeof raw === 'object' && Array.isArray(raw.groups)) {
           return {
             v: 1,
-            groups: raw.groups.filter((g) => g !== null && typeof g === 'object' && typeof g.id === 'string' && typeof g.name === 'string'),
+            groups: raw.groups
+              .filter((g) => g !== null && typeof g === 'object' && typeof g.id === 'string' && typeof g.name === 'string')
+              .map((g) => ({
+                id: g.id, name: g.name,
+                color: typeof g.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(g.color) ? g.color : undefined,
+              })),
             assignment: asObj(raw.assignment), metaCollapsed: asObj(raw.metaCollapsed), expanded: asObj(raw.expanded),
             groupBy: raw.groupBy === 'flat' ? 'flat' : 'workspace',
             orderBy: raw.orderBy === 'updated' ? 'updated' : 'manual',
@@ -100,8 +111,8 @@ return {
       '.wsg-hint{margin:0 8px 6px;font-size:11px;line-height:15px;color:var(--dsw-alias-label-secondary);}',
       '.wsg-row.wsg-dragging{opacity:.45;cursor:grabbing;}',
       '.wsg-ghost{position:fixed;left:0;top:0;z-index:9999;pointer-events:none;padding:4px 9px;border-radius:6px;background:var(--dsw-alias-bg-overlay);border:1px solid var(--dsw-alias-border-l1);box-shadow:0 10px 26px rgba(0,0,0,.28);font-size:12px;color:var(--dsw-alias-label-primary);max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}',
-      '.wsg-drop{outline:2px dashed var(--dsw-alias-brand-primary);outline-offset:-3px;border-radius:8px;background:color-mix(in srgb, var(--dsw-alias-brand-primary) 10%, transparent);}',
-      '.wsg-drop-hint{outline:2px dashed color-mix(in srgb, var(--dsw-alias-brand-primary) 45%, transparent);outline-offset:-3px;border-radius:8px;}',
+      '.wsg-drop{outline:2px dashed var(--wsg-accent);outline-offset:-3px;border-radius:8px;background:color-mix(in srgb, var(--wsg-accent) 10%, transparent);}',
+      '.wsg-drop-hint{outline:2px dashed color-mix(in srgb, var(--wsg-accent) 45%, transparent);outline-offset:-3px;border-radius:8px;}',
       '.wsg-row.wsg-over{background:var(--dsw-alias-bg-layer-2);}',
       '.wsg-row{display:flex;align-items:center;gap:6px;height:30px;padding:0 6px;border-radius:6px;cursor:pointer;user-select:none;position:relative;font-size:13px;}',
       '.wsg-row:hover{background:var(--dsw-alias-bg-layer-1);}',
@@ -140,6 +151,12 @@ return {
       '.wsg-mdesc{margin-top:8px;font-size:12px;color:var(--dsw-alias-label-secondary);}',
       '.wsg-input{width:100%;box-sizing:border-box;margin-top:12px;padding:6px 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;outline:none;}',
       '.wsg-merr{margin-top:8px;font-size:12px;color:var(--dsw-alias-state-error-primary);}',
+      '.wsg-colors{display:flex;align-items:center;gap:6px;margin-top:12px;flex-wrap:wrap;}',
+      '.wsg-colorlabel{font-size:12px;color:var(--dsw-alias-label-secondary);margin-right:2px;}',
+      '.wsg-swatch{width:20px;height:20px;border-radius:50%;border:1px solid var(--dsw-alias-border-l2);padding:0;cursor:pointer;}',
+      '.wsg-swatch.wsg-swatch-on{outline:2px solid var(--dsw-alias-label-primary);outline-offset:1px;}',
+      '.wsg-swatch-def{background:var(--dsw-alias-label-primary);}',
+      '.wsg-colorinput{width:28px;height:22px;padding:0;border:1px solid var(--dsw-alias-border-l2);border-radius:6px;background:transparent;cursor:pointer;}',
       '.wsg-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px;}',
       '.wsg-obtn,.wsg-pbtn{border-radius:8px;padding:5px 12px;font-size:13px;cursor:pointer;border:1px solid var(--dsw-alias-border-l1);background:transparent;color:var(--dsw-alias-label-primary);}',
       '.wsg-pbtn{background:var(--dsw-alias-brand-primary);border-color:transparent;color:#fff;}',
@@ -311,11 +328,13 @@ return {
       const [value, setValue] = useState(props.initial)
       const [busy, setBusy] = useState(false)
       const [err, setErr] = useState(null)
+      // Meta-folder colour: undefined keeps the theme's normal label colour.
+      const [color, setColor] = useState(props.color)
       function confirm() {
         const trimmed = value.trim()
         if (trimmed === '' || busy) return
         setBusy(true); setErr(null)
-        Promise.resolve(props.onConfirm(trimmed)).then(() => { setBusy(false) }, (reason) => {
+        Promise.resolve(props.onConfirm(trimmed, color)).then(() => { setBusy(false) }, (reason) => {
           setBusy(false)
           setErr(reason instanceof Error ? reason.message : String(reason))
         })
@@ -331,6 +350,23 @@ return {
           onChange: (e) => setValue(e.target.value),
           onKeyDown: (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm() } },
         }),
+        props.withColor === true ? h('div', { className: 'wsg-colors', role: 'group', 'aria-label': tm('colorLabel') },
+          h('span', { className: 'wsg-colorlabel' }, tm('colorLabel')),
+          META_COLORS.map((c) => h('button', {
+            key: c, type: 'button', className: 'wsg-swatch' + (color === c ? ' wsg-swatch-on' : ''),
+            style: { background: c }, title: c, 'aria-label': tm('colorAria', { color: c }),
+            onClick: () => setColor(c),
+          })),
+          h('button', {
+            type: 'button', className: 'wsg-swatch wsg-swatch-def' + (color === undefined ? ' wsg-swatch-on' : ''),
+            title: tm('colorDefault'), 'aria-label': tm('colorDefault'),
+            onClick: () => setColor(undefined),
+          }),
+          h('input', {
+            type: 'color', className: 'wsg-colorinput', 'aria-label': tm('colorCustom'),
+            value: typeof color === 'string' && /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#0091ff',
+            onChange: (e) => setColor(e.target.value),
+          })) : null,
         err !== null ? h('div', { className: 'wsg-merr', role: 'alert' }, err) : null)
     }
 
@@ -427,8 +463,10 @@ return {
       // dragged workspace folder (the pointer drag hit-tests [data-meta]).
       const over = api.overMeta === mg.id
       const dragging = api.dragWid !== undefined
+      const accent = mg.color !== undefined ? mg.color : 'var(--dsw-alias-brand-primary)'
+      const tint = mg.color !== undefined ? { color: mg.color } : undefined
       return h('div', {
-        key: mg.id, style: { marginTop: 6 }, 'data-meta': mg.id,
+        key: mg.id, style: { marginTop: 6, '--wsg-accent': accent }, 'data-meta': mg.id,
         className: over ? 'wsg-drop' : (dragging ? 'wsg-drop-hint' : undefined),
       },
         h('div', {
@@ -437,13 +475,13 @@ return {
           onClick: () => api.toggleMeta(mg.id), title: mg.name,
         },
           h('span', { className: 'wsg-glyph' }, icoChevron(!collapsed)),
-          h('span', { className: 'wsg-glyph' }, icoGroup(16)),
-          h('span', { className: 'wsg-name' }, mg.name),
+          h('span', { className: 'wsg-glyph', style: tint }, icoGroup(16)),
+          h('span', { className: 'wsg-name', style: tint }, mg.name),
           h('span', { className: 'wsg-count' }, total === 0 ? tm('emptyGroup') : t(total === 1 ? 'sessions.count.one' : 'sessions.count.other', { n: total })),
           h('span', { className: 'wsg-acts' }, h(Menu, {
             label: tm('groupActions', { name: mg.name }), onOpenChange: setMenuOpen,
             items: [
-              { id: 'rename', label: tm('renameGroup'), run: () => api.renameGroup(mg.id, mg.name) },
+              { id: 'rename', label: tm('renameGroup'), run: () => api.renameGroup(mg.id, mg.name, mg.color) },
               { id: 'up', label: tm('moveUp'), run: () => api.moveGroup(idx, -1) },
               { id: 'down', label: tm('moveDown'), run: () => api.moveGroup(idx, +1) },
               { sep: true, id: 'sep' },
@@ -670,7 +708,7 @@ return {
           if (gid2 === undefined) delete assignment[wid]; else assignment[wid] = gid2
           return Object.assign({}, prev, { assignment })
         }),
-        renameGroup: (gid2, cur) => setNameModal({ kind: 'renameGroup', id: gid2, initial: cur, title: tm('renameGroup') }),
+        renameGroup: (gid2, cur, color) => setNameModal({ kind: 'renameGroup', id: gid2, initial: cur, color: color, title: tm('renameGroup') }),
         deleteGroup: (gid2, name) => setConfirmModal({ title: tm('deleteGroup'), desc: tm('deleteGroupDesc'), confirmLabel: tm('deleteGroup'), danger: true, run: () => { deleteGroup(gid2) } }),
         moveGroup: (idx, delta) => update((prev) => {
           const j = idx + delta
@@ -826,9 +864,10 @@ return {
           if (nameModal.kind === 'renameGroup') {
             return h(NameModal, {
               key: 'rg' + nameModal.id, t, title: nameModal.title, initial: nameModal.initial, confirmLabel: t('rename'),
+              withColor: true, color: nameModal.color,
               onClose: () => setNameModal(null),
-              onConfirm: (name) => {
-                update((prev) => Object.assign({}, prev, { groups: prev.groups.map((g) => { if (g.id === nameModal.id) return { id: g.id, name }; return g }) }))
+              onConfirm: (name, color) => {
+                update((prev) => Object.assign({}, prev, { groups: prev.groups.map((g) => { if (g.id === nameModal.id) return { id: g.id, name, color }; return g }) }))
                 setNameModal(null)
                 return Promise.resolve()
               },
@@ -836,10 +875,11 @@ return {
           }
           return h(NameModal, {
             key: 'ng', t, title: tm('newGroup'), initial: '', confirmLabel: tm('create'),
+            withColor: true, color: undefined,
             onClose: () => setNameModal(null),
-            onConfirm: (name) => {
+            onConfirm: (name, color) => {
               const id = 'g' + Date.now().toString(36) + Math.floor(Math.random() * 1e4).toString(36)
-              update((prev) => Object.assign({}, prev, { groups: prev.groups.concat([{ id, name }]) }))
+              update((prev) => Object.assign({}, prev, { groups: prev.groups.concat([{ id, name, color }]) }))
               setNameModal(null)
               return Promise.resolve()
             },
