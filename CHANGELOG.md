@@ -4,6 +4,26 @@ All notable changes to this plugin. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] — 2026-09-10
+
+### Added
+
+- **New workspace in this meta folder** — the meta folder's `⋯` menu now creates a
+  real workspace and files it straight into that folder, expanding it and opening a
+  session. It uses the new path dialog below.
+
+### Fixed
+
+- **The Add workspace action works again.** It no longer depends on the declared
+  `sidebar.workspaces.directoryFlow` hole, which the shipped registration also
+  declares; that dependency left the toolbar action dead. The new path dialog types
+  a folder path directly (the picker is optional), so creating a workspace can no
+  longer be blocked by a missing picker backend.
+- **The Add workspace icon is the shipped one again.** The toolbar had been showing
+  a plain plus; it now renders the original `IconProjectAddOutline16` glyph.
+- The child hole declaration and its rejected-registration fallback are gone, so the
+  seat registers once, cleanly, at `priority: -1`.
+
 ## [1.0.0] — 2026-09-10
 
 First public release.
@@ -40,4 +60,5 @@ First public release.
   drop target could ever activate. The gesture now rides plain mouse events with
   `elementFromPoint` hit-testing.
 
+[1.1.0]: https://github.com/ManoloRemiddi/DSH-Metafolder-Plugin/releases/tag/v1.1.0
 [1.0.0]: https://github.com/ManoloRemiddi/DSH-Metafolder-Plugin/releases/tag/v1.0.0

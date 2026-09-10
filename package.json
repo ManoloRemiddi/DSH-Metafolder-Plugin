@@ -1,7 +1,7 @@
 {
   "name": "dsh-metafolder-plugin",
-  "version": "1.0.0",
-  "description": "DSH Metafolder Plugin — visual meta-folders for the DeepSeek Harness sidebar workspaces: nest real workspace folders under named, collapsible groups, by drag and drop or the row menu. Paths, permissions, sessions and workspace ordering are untouched.",
+  "version": "1.1.0",
+  "description": "DSH Metafolder Plugin \u2014 visual meta-folders for the DeepSeek Harness sidebar workspaces: nest real workspace folders under named, collapsible groups, by drag and drop or the row menu. Paths, permissions, sessions and workspace ordering are untouched.",
   "license": "MIT",
   "author": {
     "name": "Manolo Remiddi"

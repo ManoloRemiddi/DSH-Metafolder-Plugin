@@ -15,7 +15,6 @@ return {
     }
     const locale = ctx.get('locale')
 
-    const HOLE = 'sidebar.workspaces.directoryFlow'
     const LS_META = 'dsh.wsmeta.v1'
     const LS_SHIPPED = 'dsh.workspace.view.v5'
     const LIMIT5 = 5
@@ -37,6 +36,14 @@ return {
         dndHint: 'Drag a workspace folder onto a meta folder to file it — drop it here to take it out.',
         dndNoMeta: 'No meta folder yet — create one with the folder + button, then drag workspaces into it.',
         colorLabel: 'Colour', colorAria: 'Use colour {color}', colorDefault: 'Theme colour', colorCustom: 'Custom colour',
+        newWorkspaceHere: 'New workspace in this meta folder',
+        newWorkspaceTitle: 'New workspace',
+        newWorkspaceInTitle: 'New workspace in “{name}”',
+        newWorkspaceHint: 'The folder must already exist on the host. The new workspace opens a session and is filed into the meta folder.',
+        workspacePath: 'Workspace folder path',
+        workspacePathPlaceholder: '/home/you/projects/my-project',
+        browse: 'Browse…',
+        pickerUnavailable: 'No directory picker is available in this composition.',
       },
       zh: {
         newGroup: '新建分组', create: '创建', folderName: '分组名称',
@@ -49,6 +56,14 @@ return {
         dndHint: '把工作区文件夹拖到分组文件夹即可归类；拖到此处可移出。',
         dndNoMeta: '还没有分组文件夹——先用文件夹 + 按钮创建，再拖入工作区。',
         colorLabel: '颜色', colorAria: '使用颜色 {color}', colorDefault: '主题色', colorCustom: '自定义颜色',
+        newWorkspaceHere: '在此分组中新建工作区',
+        newWorkspaceTitle: '新建工作区',
+        newWorkspaceInTitle: '在“{name}”中新建工作区',
+        newWorkspaceHint: '该文件夹必须已存在。新工作区会打开一个会话并归入该分组。',
+        workspacePath: '工作区文件夹路径',
+        workspacePathPlaceholder: '/home/you/projects/my-project',
+        browse: '浏览…',
+        pickerUnavailable: '当前组合中没有可用的目录选择器。',
       },
     }
     let lang = 'en'
@@ -151,6 +166,9 @@ return {
       '.wsg-mdesc{margin-top:8px;font-size:12px;color:var(--dsw-alias-label-secondary);}',
       '.wsg-input{width:100%;box-sizing:border-box;margin-top:12px;padding:6px 8px;border-radius:8px;border:1px solid var(--dsw-alias-border-l2);background:var(--dsw-alias-bg-base);color:var(--dsw-alias-label-primary);font-size:13px;outline:none;}',
       '.wsg-merr{margin-top:8px;font-size:12px;color:var(--dsw-alias-state-error-primary);}',
+      '.wsg-pathrow{display:flex;align-items:center;gap:8px;margin-top:12px;}',
+      '.wsg-pathrow .wsg-input{margin-top:0;flex:1;min-width:0;}',
+      '.wsg-pathrow .wsg-obtn{flex:0 0 auto;white-space:nowrap;}',
       '.wsg-colors{display:flex;align-items:center;gap:6px;margin-top:12px;flex-wrap:wrap;}',
       '.wsg-colorlabel{font-size:12px;color:var(--dsw-alias-label-secondary);margin-right:2px;}',
       '.wsg-swatch{width:20px;height:20px;border-radius:50%;border:1px solid var(--dsw-alias-border-l2);padding:0;cursor:pointer;}',
@@ -190,6 +208,12 @@ return {
     }
     const icoFolder = (s) => svg('M1.8 4.3c0-.7.5-1.3 1.2-1.3h2.4l1.6 1.8h6.1c.7 0 1.2.5 1.2 1.2v6.5c0 .7-.5 1.3-1.2 1.3H3c-.7 0-1.2-.6-1.2-1.3z', s)
     const icoGroup = (s) => svg('M1.8 6.5c0-.7.5-1.3 1.2-1.3h2.9l1.5 1.5h6.8c.7 0 1.2.5 1.2 1.2v4.6c0 .7-.5 1.3-1.2 1.3H3c-.7 0-1.2-.6-1.2-1.3zM1.8 3.8h4.4l1.1 1.4', s)
+    // The shipped "Add workspace…" glyph (IconProjectAddOutline16), reproduced
+    // exactly so the toolbar keeps the icon users already know.
+    const icoProjectAdd = (s) => h('svg', { width: s, height: s, viewBox: '0 0 16 16', fill: 'none', 'aria-hidden': 'true' },
+      h('path', { transform: 'translate(9.52 2.52)', fill: 'currentColor', d: 'M3.55246 0L3.55246 2.44252L6 2.44252L6 3.55748L3.55246 3.55748L3.55246 6L2.43834 6L2.43834 3.55748L0 3.55748L0 2.44252L2.43834 2.44252L2.43834 0L3.55246 0Z' }),
+      h('path', { transform: 'translate(0.3496 2.35)', fill: 'currentColor', d: 'M4.76367 0C5.36861 1.80598e-05 5.93113 0.310294 6.25488 0.821289L6.78027 1.64941C6.79685 1.67558 6.81791 1.69775 6.83887 1.71973C6.72186 2.15521 6.65702 2.61192 6.65137 3.08301C6.25601 2.96045 5.90909 2.70478 5.68164 2.3457L5.15723 1.5166C5.07183 1.38189 4.92318 1.3008 4.76367 1.30078L2.32422 1.30078C1.7589 1.30078 1.30078 1.7589 1.30078 2.32422L1.30078 10.1338C1.30078 10.6991 1.7589 11.1572 2.32422 11.1572L11.9766 11.1572C12.5419 11.1572 13 10.6991 13 10.1338L13 8.58398C13.4545 8.5135 13.8903 8.38748 14.3008 8.21289L14.3008 10.1338C14.3008 11.4171 13.2598 12.458 11.9766 12.458L2.32422 12.458C1.04093 12.458 0 11.4171 0 10.1338L0 2.32422C0 1.04093 1.04093 0 2.32422 0L4.76367 0Z' }))
+
     // Distinct "new meta folder" glyph: folder outline with a plus inside.
     const icoFolderPlus = (s) => h('svg', { width: s, height: s, viewBox: '0 0 16 16', fill: 'none', stroke: 'currentColor', 'stroke-width': 1.4, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'aria-hidden': 'true' },
       h('path', { d: 'M1.8 4.3c0-.7.5-1.3 1.2-1.3h2.4l1.6 1.8h6.1c.7 0 1.2.5 1.2 1.2v6.5c0 .7-.5 1.3-1.2 1.3H3c-.7 0-1.2-.6-1.2-1.3z' }),
@@ -370,6 +394,52 @@ return {
         err !== null ? h('div', { className: 'wsg-merr', role: 'alert' }, err) : null)
     }
 
+    // New-workspace dialog. A path can always be typed, so creating a workspace
+    // never depends on the Host directory-picker backend being available;
+    // "Browse…" is the optional convenience on top.
+    function PathModal(props) {
+      const [value, setValue] = useState('')
+      const [busy, setBusy] = useState(false)
+      const [err, setErr] = useState(null)
+      function browse() {
+        const picker = ctx.remote !== undefined ? ctx.remote.directoryPicker : undefined
+        if (picker === undefined || typeof picker.pick !== 'function') { setErr(tm('pickerUnavailable')); return }
+        setErr(null); setBusy(true)
+        Promise.resolve(picker.pick()).then((result) => {
+          setBusy(false)
+          if (result === undefined || result.ok !== true) {
+            const msg = result !== undefined && result.error !== undefined && result.error.message !== undefined ? String(result.error.message) : tm('pickerUnavailable')
+            if (msg.toLowerCase().indexOf('cancel') === -1) setErr(msg)
+            return
+          }
+          if (result.value !== null && result.value !== undefined) setValue(result.value)
+        }, (r) => { setBusy(false); setErr(r instanceof Error ? r.message : String(r)) })
+      }
+      function confirm() {
+        const trimmed = value.trim()
+        if (trimmed === '' || busy) return
+        setBusy(true); setErr(null)
+        Promise.resolve(props.onConfirm(trimmed)).then(() => { setBusy(false) }, (reason) => {
+          setBusy(false)
+          setErr(reason instanceof Error ? reason.message : String(reason))
+        })
+      }
+      return h(Modal, {
+        open: true, t: props.t, title: props.title, confirmLabel: tm('create'),
+        disabled: busy || value.trim() === '', onClose: props.onClose, onConfirm: confirm,
+      },
+        h('div', { className: 'wsg-pathrow' },
+          h('input', {
+            className: 'wsg-input wsg-pathinput', value: value, autoFocus: true,
+            'aria-label': tm('workspacePath'), placeholder: tm('workspacePathPlaceholder'), disabled: busy,
+            onChange: (e) => setValue(e.target.value),
+            onKeyDown: (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm() } },
+          }),
+          h('button', { type: 'button', className: 'wsg-obtn', disabled: busy, onClick: browse }, tm('browse'))),
+        props.hint !== undefined ? h('div', { className: 'wsg-mdesc' }, props.hint) : null,
+        err !== null ? h('div', { className: 'wsg-merr', role: 'alert' }, err) : null)
+    }
+
     function SessionRow(props) {
       const node = props.node; const api = props.api; const t = api.t
       const selected = node.id === api.current
@@ -484,6 +554,8 @@ return {
               { id: 'rename', label: tm('renameGroup'), run: () => api.renameGroup(mg.id, mg.name, mg.color) },
               { id: 'up', label: tm('moveUp'), run: () => api.moveGroup(idx, -1) },
               { id: 'down', label: tm('moveDown'), run: () => api.moveGroup(idx, +1) },
+              // Create a real workspace and file it straight into this folder.
+              { id: 'addws', label: tm('newWorkspaceHere'), run: () => api.addWorkspaceInto(mg.id, mg.name) },
               { sep: true, id: 'sep' },
               { id: 'del', label: tm('deleteGroup'), danger: true, run: () => api.deleteGroup(mg.id, mg.name) },
             ],
@@ -517,8 +589,6 @@ return {
     function Browser(props) {
       const t = props.t
       const wide = props.wide === true
-      const useDirectoryFlow = props.useDirectoryFlow
-      const flowOccupied = useDirectoryFlow !== undefined ? useDirectoryFlow((v) => v) : true
       const list = props.useSessions((s) => s)
       const wsState = props.useWorkspaces((s) => s)
       const wss = wsState.items
@@ -547,11 +617,9 @@ return {
       const [query, setQuery] = useState('')
       const [searchExpanded, setSearchExpanded] = useState(false)
       const [remote, setRemote] = useState({ q: '', status: 'idle', items: [], hasMore: false })
-      const [flowOpen, setFlowOpen] = useState(false)
-      const [flowBusy, setFlowBusy] = useState(false)
-      const [flowErr, setFlowErr] = useState(null)
       const [nameModal, setNameModal] = useState(null)
       const [confirmModal, setConfirmModal] = useState(null)
+      const [pathModal, setPathModal] = useState(null)
       const [showAllMap, setShowAllMap] = useState({})
       // Pointer drag state. Native HTML5 drag-and-drop proved unreliable in
       // this host (dragstart fired, then the drag was cancelled before any
@@ -683,6 +751,7 @@ return {
         beginDrag: (wid, label, e) => { const h2 = dragHandlersRef.current; if (h2 !== null) h2.begin(wid, label, e) },
         openSession: (sid) => { sessions.open(sid) },
         newSession: (key, wid) => { update((prev) => (prev.expanded[key] === true ? prev : Object.assign({}, prev, { expanded: Object.assign({}, prev.expanded, { [key]: true }) }))); startSessionIn(wid) },
+        addWorkspaceInto: (gid2, name) => openNewWorkspace(gid2, name),
         toggleGroup: (key) => update((prev) => Object.assign({}, prev, { expanded: Object.assign({}, prev.expanded, { [key]: prev.expanded[key] !== true }) })),
         toggleMeta: (gid2) => update((prev) => Object.assign({}, prev, { metaCollapsed: Object.assign({}, prev.metaCollapsed, { [gid2]: prev.metaCollapsed[gid2] !== true }) })),
         setShowAll: (key, v) => setShowAllMap((prev) => Object.assign({}, prev, { [key]: v })),
@@ -839,6 +908,13 @@ return {
 
       // ---- dialogs ----
       function dialog() {
+        if (pathModal !== null) {
+          return h(PathModal, {
+            key: 'nw', t, title: pathModal.title, hint: tm('newWorkspaceHint'),
+            onClose: () => setPathModal(null),
+            onConfirm: (path2) => createWorkspaceAt(path2, pathModal.metaId),
+          })
+        }
         if (nameModal !== null) {
           if (nameModal.kind === 'renameWorkspace') {
             return h(NameModal, {
@@ -889,49 +965,35 @@ return {
           return h(Modal, {
             open: true, t, title: confirmModal.title, desc: confirmModal.desc, confirmLabel: confirmModal.confirmLabel, danger: confirmModal.danger === true,
             onClose: () => setConfirmModal(null),
-            onConfirm: () => { Promise.resolve(confirmModal.run()).then(() => setConfirmModal(null), (r) => { setConfirmModal(null); setFlowErr(r instanceof Error ? r.message : String(r)) }) },
+            onConfirm: () => { Promise.resolve(confirmModal.run()).then(() => setConfirmModal(null), (r) => { setConfirmModal(null); console.error('action failed:', r) }) },
           })
         }
         return null
       }
 
-      // ---- add-workspace flow ----
-      const flowAvailable = flowOccupied === true && typeof props.renderSlot === 'function'
-      function flowSlot() {
-        if (!flowAvailable || !flowOpen) return null
-        return props.renderSlot(HOLE, {
-          open: true, busy: flowBusy,
-          onPicked: (path) => {
-            setFlowBusy(true); setFlowErr(null)
-            Promise.resolve(workspaces.create({ path })).then((w) => {
-              setFlowBusy(false); setFlowOpen(false)
-              startSessionIn(w.workspaceId)
-            }, (r) => { setFlowBusy(false); setFlowErr(r instanceof Error ? r.message : String(r)) })
-          },
-          onCancel: () => { setFlowOpen(false); setFlowBusy(false) },
-          onError: (m) => { setFlowBusy(false); setFlowErr(String(m)) },
+      // ---- new-workspace flow ----
+      // A dialog where the folder path is typed (or browsed for). Typing always
+      // works, so creating a workspace no longer depends on the Host directory
+      // picker backend being available. `metaId` files the new workspace
+      // straight into that meta folder.
+      function openNewWorkspace(metaId, metaName) {
+        setPathModal({
+          metaId: metaId,
+          title: metaId !== undefined ? tm('newWorkspaceInTitle', { name: metaName }) : tm('newWorkspaceTitle'),
         })
       }
-      function onAddWorkspace() {
-        setFlowErr(null)
-        if (flowAvailable) { setFlowOpen(true); return }
-        // Fallback for a composition where the directory-flow hole is not ours
-        // to fill (the shipped registration declares it as well): drive the Host
-        // directory-picker Remote directly, exactly as the shipped
-        // UiWorkspaceService.pickDirectory helper does.
-        const picker = ctx.remote !== undefined ? ctx.remote.directoryPicker : undefined
-        if (picker === undefined || typeof picker.pick !== 'function') { setFlowErr('No directory picker is available in this composition.'); return }
-        Promise.resolve(picker.pick()).then((result) => {
-          if (result === undefined || result.ok !== true) {
-            const msg = result !== undefined && result.error !== undefined && result.error.message !== undefined ? String(result.error.message) : 'directory picker failed'
-            if (msg.toLowerCase().indexOf('cancel') === -1) setFlowErr(msg)
-            return undefined
+      function onAddWorkspace() { openNewWorkspace(undefined) }
+      function createWorkspaceAt(path2, metaId) {
+        return Promise.resolve(workspaces.create({ path: path2 })).then((w) => {
+          if (metaId !== undefined) {
+            update((prev) => Object.assign({}, prev, {
+              assignment: Object.assign({}, prev.assignment, { [w.workspaceId]: metaId }),
+              metaCollapsed: Object.assign({}, prev.metaCollapsed, { [metaId]: false }),
+            }))
           }
-          if (result.value === null || result.value === undefined) return undefined
-          return Promise.resolve(workspaces.create({ path: result.value })).then(
-            (w) => { startSessionIn(w.workspaceId) },
-            (r) => setFlowErr(r instanceof Error ? r.message : String(r)))
-        }, (r) => setFlowErr(r instanceof Error ? r.message : String(r)))
+          setPathModal(null)
+          startSessionIn(w.workspaceId)
+        })
       }
 
       // ---- rail (collapsed sidebar) ----
@@ -943,7 +1005,7 @@ return {
               type: 'button', className: 'wsg-btn wsg-newgroup', 'aria-label': tm('addGroup'), title: tm('addGroup'),
               onClick: () => { if (props.expandSidebar !== undefined) props.expandSidebar(); setNameModal({ kind: 'newGroup', initial: '', title: tm('newGroup') }) },
             }, icoFolderPlus(16)),
-            h('button', { type: 'button', className: 'wsg-btn', 'aria-label': t('workspace.add'), title: t('workspace.add'), onClick: onAddWorkspace }, icoPlus(16))),
+            h('button', { type: 'button', className: 'wsg-btn', 'aria-label': t('workspace.add'), title: t('workspace.add'), onClick: onAddWorkspace }, icoProjectAdd(16))),
           dialog())
       }
 
@@ -979,8 +1041,7 @@ return {
               { id: 'o-updated', label: (orderBy === 'updated' ? '✓  ' : '') + t('orderBy.updated'), run: () => setView({ orderBy: 'updated' }) },
             ],
           }) : null,
-          nq === '' ? h('button', { type: 'button', className: 'wsg-btn', 'aria-label': t('workspace.add'), title: t('workspace.add'), onClick: onAddWorkspace }, icoPlus(16)) : null),
-        flowErr !== null ? h('div', { className: 'wsg-err', role: 'alert' }, flowErr) : null,
+          nq === '' ? h('button', { type: 'button', className: 'wsg-btn', 'aria-label': t('workspace.add'), title: t('workspace.add'), onClick: onAddWorkspace }, icoProjectAdd(16)) : null),
         dragWid !== undefined ? h('div', { className: 'wsg-hint' }, doc.groups.length > 0 ? tm('dndHint') : tm('dndNoMeta')) : null,
         h('div', { className: 'wsg-list' + (overList ? ' wsg-list-drop' : '') },
           nq !== '' ? h(SearchRows, { api, items: mergedResults(), pending: remote.q !== nq || remote.status === 'loading', failed: remote.q === nq && remote.status === 'error', more: remote.q === nq && remote.hasMore === true, limit: resultLimit })
@@ -988,17 +1049,12 @@ return {
               : h('div', { role: 'tree', 'aria-label': t('section.sessions') }, flatNodes.map((n) => h(SessionRow, { key: n.id, node: n, api }))))
               : emptyAll ? h('div', { className: 'wsg-empty' }, t('empty.none'))
                 : h('div', { role: 'tree', 'aria-label': t('section.sessions') }, sections)),
-        flowSlot(),
         dialog())
     }
 
     // ---------- registration ----------
     const flowHooks = {}
     if (typeof slots.entries === 'function' && typeof slots.subscribe === 'function') {
-      flowHooks.directoryFlow = {
-        getSnapshot: () => { try { return slots.entries(HOLE).length > 0 } catch (e) { return true } },
-        subscribe: (listener) => { try { return slots.subscribe(HOLE, listener) } catch (e) { return () => { } } },
-      }
     }
     // Host facts observable (contract twin of the shipped browser's hostInfo).
     try {
@@ -1023,27 +1079,17 @@ return {
     }
 
     try {
-      ctx.effect(() => slots.inject('sidebar.workspaces', () => {
-        try {
-          return slots.register({
-            name: 'sidebar.workspaces',
-            // A single slot accepts one registration per priority and the
-            // lowest renders: -1 is what shadows the shipped browser at 0.
-            priority: -1,
-            children: { [HOLE]: { kind: 'single', scope: 'root' } },
-            locale: 'workspace',
-            inject: injectedFace,
-          }, Browser)
-        } catch (inner) {
-          console.error('children hole declaration rejected; registering without the add-workspace flow:', inner)
-          return slots.register({
-            name: 'sidebar.workspaces',
-            priority: -1,
-            locale: 'workspace',
-            inject: injectedFace,
-          }, Browser)
-        }
-      }), 'wsg:seat')
+      ctx.effect(() => slots.inject('sidebar.workspaces', () => slots.register({
+        name: 'sidebar.workspaces',
+        // A single slot accepts one registration per priority and the lowest
+        // renders: -1 is what shadows the shipped browser at 0.
+        priority: -1,
+        // No child hole: the directory-flow hole is declared by the shipped
+        // registration too, and depending on it left the add action dead. The
+        // Host directory-picker Remote is driven directly instead.
+        locale: 'workspace',
+        inject: injectedFace,
+      }, Browser)), 'wsg:seat')
     } catch (e) {
       console.error('seat registration failed:', e)
     }
