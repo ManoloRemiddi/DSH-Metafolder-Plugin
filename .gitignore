@@ -1,0 +1,6 @@
+# Dependencies (none are vendored here)
+node_modules/
+
+# Local noise
+*.log
+.DS_Store

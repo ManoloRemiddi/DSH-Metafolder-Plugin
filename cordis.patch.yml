@@ -1,0 +1,16 @@
+# DSH Metafolder Plugin bundle patch.
+#
+# Inserts the meta-folder plugin row into the web profile roster. Mounting the
+# row is what makes the web client-module scan read this package's `dsh.client`
+# declaration and serve lib/client.js to the browser, where it shadows the
+# `sidebar.workspaces` seat.
+#
+# Install (web profile):
+#   ln -s "/path/to/DSH-Metafolder-Plugin" \
+#         ~/.dsh/profiles/web/node_modules/dsh-metafolder-plugin
+#   # then add the insert row below to ~/.dsh/profiles/web/cordis.patch.yml
+#
+# Revert: remove the row (and the symlink), then restart `dsh web`.
+- insert:
+    - id: metafolder-plugin
+      name: 'dsh-metafolder-plugin'
