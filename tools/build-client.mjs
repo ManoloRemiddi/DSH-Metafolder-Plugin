@@ -38,7 +38,7 @@ ${body}
 		// ---- end client.js ----
 
 		exports.name = "${ID}";
-		exports.inject = ['slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout'];
+		exports.inject = ['slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'remote.metafolder', 'layout'];
 		exports.apply = plugin.apply;
 		return module.exports;
 	},

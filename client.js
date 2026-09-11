@@ -17,6 +17,7 @@ return {
 
     const LS_META = 'dsh.wsmeta.v1'
     const LS_SHIPPED = 'dsh.workspace.view.v5'
+    const META_REMOTE = ctx.remote !== undefined ? ctx.remote.metafolder : undefined
     const LIMIT5 = 5
     const SEARCH_MS = 250
     // Curated meta-folder colours: mid-tone hues that stay legible on both the
@@ -81,21 +82,21 @@ return {
     }
 
     // ---------- persistence (localStorage; same mechanism the shipped store uses) ----------
-    function blankDoc() { return { v: 1, groups: [], assignment: {}, metaCollapsed: {}, expanded: {}, groupBy: 'workspace', orderBy: 'manual' } }
+    function blankDoc() { return { v: 2, groups: [], assignment: {}, sessionAssignment: {}, metaCollapsed: {}, expanded: {}, groupBy: 'workspace', orderBy: 'manual' } }
     function asObj(x) { return x !== null && typeof x === 'object' ? x : {} }
     function readDoc() {
       try {
         const raw = JSON.parse(localStorage.getItem(LS_META))
         if (raw !== null && typeof raw === 'object' && Array.isArray(raw.groups)) {
           return {
-            v: 1,
+            v: 2,
             groups: raw.groups
               .filter((g) => g !== null && typeof g === 'object' && typeof g.id === 'string' && typeof g.name === 'string')
               .map((g) => ({
                 id: g.id, name: g.name,
                 color: typeof g.color === 'string' && /^#[0-9a-fA-F]{3,8}$/.test(g.color) ? g.color : undefined,
               })),
-            assignment: asObj(raw.assignment), metaCollapsed: asObj(raw.metaCollapsed), expanded: asObj(raw.expanded),
+            assignment: asObj(raw.assignment), sessionAssignment: asObj(raw.sessionAssignment), metaCollapsed: asObj(raw.metaCollapsed), expanded: asObj(raw.expanded),
             groupBy: raw.groupBy === 'flat' ? 'flat' : 'workspace',
             orderBy: raw.orderBy === 'updated' ? 'updated' : 'manual',
           }
@@ -103,7 +104,25 @@ return {
       } catch (e) { /* fall through */ }
       return blankDoc()
     }
-    function saveDoc(doc) { try { localStorage.setItem(LS_META, JSON.stringify(doc)) } catch (e) { /* quota */ } }
+    function saveDoc(doc) {
+      try { localStorage.setItem(LS_META, JSON.stringify(doc)) } catch (e) { /* quota */ }
+      // Host persistence is authoritative when the optional service is mounted.
+      // The local copy remains a compatibility cache for older DSH compositions.
+      try {
+        if (META_REMOTE !== undefined && typeof META_REMOTE.save === 'function') {
+          Promise.resolve(META_REMOTE.save(doc)).catch((e) => console.warn('metafolder persistence failed', e))
+        }
+      } catch (e) { /* optional host service */ }
+    }
+    async function loadDoc() {
+      try {
+        if (META_REMOTE !== undefined && typeof META_REMOTE.load === 'function') {
+          const result = await META_REMOTE.load()
+          if (result !== undefined && result !== null && typeof result === 'object' && Array.isArray(result.groups)) return result
+        }
+      } catch (e) { console.warn('metafolder load failed', e) }
+      return readDoc()
+    }
     // Read-only borrow of the shipped view store so existing manual session order carries over.
     let sv = {}
     try {
@@ -449,6 +468,7 @@ return {
       return h('div', {
         className: 'wsg-row' + (selected ? ' wsg-sel' : '') + (menuOpen ? ' wsg-open' : ''),
         style: { paddingLeft: 0 }, role: 'treeitem', 'aria-selected': selected,
+        onMouseDown: (e) => { api.beginDrag('session', node.id, title, e) },
         onClick: () => api.openSession(node.id), title,
       },
         h('span', { className: 'wsg-glyph', 'aria-label': st !== undefined ? st.label : t('status.idle') },
@@ -492,9 +512,9 @@ return {
       }
       return h('div', { key: g.key },
         h('div', {
-          className: 'wsg-row' + (active ? ' wsg-active' : '') + (menuOpen ? ' wsg-open' : '') + (api.dragWid === g.workspaceId ? ' wsg-dragging' : ''),
+          className: 'wsg-row' + (active ? ' wsg-active' : '') + (menuOpen ? ' wsg-open' : '') + (api.dragWid === g.workspaceId || (api.dragSid !== undefined && g.nodes.some((n) => n.id === api.dragSid)) ? ' wsg-dragging' : ''),
           style: { paddingLeft: depth }, role: 'treeitem', 'aria-expanded': expanded,
-          onMouseDown: g.workspaceId !== undefined ? (e) => api.beginDrag(g.workspaceId, g.label, e) : undefined,
+          onMouseDown: g.workspaceId !== undefined ? (e) => api.beginDrag('workspace', g.workspaceId, g.label, e) : undefined,
           onClick: () => {
             // A completed drag swallows the click that follows the release.
             if (Date.now() - api.suppressRef.current < 350) return
@@ -532,7 +552,7 @@ return {
       // Drop target for the pointer drag: the whole meta folder accepts a
       // dragged workspace folder (the pointer drag hit-tests [data-meta]).
       const over = api.overMeta === mg.id
-      const dragging = api.dragWid !== undefined
+      const dragging = api.dragWid !== undefined || api.dragSid !== undefined
       const accent = mg.color !== undefined ? mg.color : 'var(--dsw-alias-brand-primary)'
       const tint = mg.color !== undefined ? { color: mg.color } : undefined
       return h('div', {
@@ -604,6 +624,11 @@ return {
       }
 
       const [doc, setDoc] = useState(readDoc)
+      useEffect(() => {
+        let live = true
+        loadDoc().then((next) => { if (live && next !== undefined) setDoc(next) }, () => {})
+        return () => { live = false }
+      }, [])
       // View state, mirroring the shipped browser's two view options so the
       // meta-folder layer is additive: Workspace/Flat grouping and
       // Manual/Updated session order.
@@ -625,6 +650,7 @@ return {
       // this host (dragstart fired, then the drag was cancelled before any
       // dragover), so the browser owns the gesture with plain mouse events.
       const [dragWid, setDragWid] = useState(undefined)
+      const [dragSid, setDragSid] = useState(undefined)
       const [overMeta, setOverMeta] = useState(undefined)
       const [overList, setOverList] = useState(false)
       const dragRef = React.useRef(null)
@@ -738,6 +764,13 @@ return {
       for (const g of wsGroups) {
         const gid = doc.assignment[g.workspaceId]
         if (gid !== undefined && groupIds.has(gid)) { if (assigned[gid] === undefined) assigned[gid] = []; assigned[gid].push(g) } else plain.push(g)
+        for (const n of g.nodes) {
+          const sidGroup = (doc.sessionAssignment || {})[n.id]
+          if (sidGroup !== undefined && groupIds.has(sidGroup)) {
+            if (assigned[sidGroup] === undefined) assigned[sidGroup] = []
+            assigned[sidGroup].push({ key: 'session:' + n.id, workspaceId: undefined, cwd: g.cwd, label: g.label, nodes: [n] })
+          }
+        }
       }
 
       // Flat view: one list of every visible session, using the shipped flat
@@ -747,8 +780,8 @@ return {
       // ---- api passed to stable child components ----
       const api = {
         t, now, current, currentGroupKey, doc, assigned, showAll: showAllMap,
-        dragWid: dragWid, setDragWid: setDragWid, overMeta: overMeta, overList: overList, suppressRef: suppressRef,
-        beginDrag: (wid, label, e) => { const h2 = dragHandlersRef.current; if (h2 !== null) h2.begin(wid, label, e) },
+        dragWid: dragWid, setDragWid: setDragWid, dragSid: dragSid, setDragSid: setDragSid, overMeta: overMeta, overList: overList, suppressRef: suppressRef,
+        beginDrag: (kind, id, label, e) => { const h2 = dragHandlersRef.current; if (h2 !== null) h2.begin(kind, id, label, e) },
         openSession: (sid) => { sessions.open(sid) },
         newSession: (key, wid) => { update((prev) => (prev.expanded[key] === true ? prev : Object.assign({}, prev, { expanded: Object.assign({}, prev.expanded, { [key]: true }) }))); startSessionIn(wid) },
         addWorkspaceInto: (gid2, name) => openNewWorkspace(gid2, name),
@@ -776,6 +809,11 @@ return {
           const assignment = Object.assign({}, prev.assignment)
           if (gid2 === undefined) delete assignment[wid]; else assignment[wid] = gid2
           return Object.assign({}, prev, { assignment })
+        }),
+        assignSessionTo: (sid, gid2) => update((prev) => {
+          const sessionAssignment = Object.assign({}, prev.sessionAssignment || {})
+          if (gid2 === undefined) delete sessionAssignment[sid]; else sessionAssignment[sid] = gid2
+          return Object.assign({}, prev, { sessionAssignment })
         }),
         renameGroup: (gid2, cur, color) => setNameModal({ kind: 'renameGroup', id: gid2, initial: cur, color: color, title: tm('renameGroup') }),
         deleteGroup: (gid2, name) => setConfirmModal({ title: tm('deleteGroup'), desc: tm('deleteGroupDesc'), confirmLabel: tm('deleteGroup'), danger: true, run: () => { deleteGroup(gid2) } }),
@@ -823,11 +861,11 @@ return {
                   onList = el.closest('.wsg-list') !== null
                 }
               } catch (e) { /* pointer left the document */ }
-              if (metaId !== undefined && metaId !== null && metaId !== '') a.assignTo(st.wid, metaId)
-              else if (onList) a.assignTo(st.wid, undefined)
+              if (metaId !== undefined && metaId !== null && metaId !== '') st.kind === 'session' ? a.assignSessionTo(st.id, metaId) : a.assignTo(st.id, metaId)
+              else if (onList) st.kind === 'session' ? a.assignSessionTo(st.id, undefined) : a.assignTo(st.id, undefined)
             }
           }
-          setDragWid(undefined); setOverMeta(undefined); setOverList(false)
+          setDragWid(undefined); setDragSid(undefined); setOverMeta(undefined); setOverList(false)
         }
         function onMove(e) {
           const st = dragRef.current
@@ -841,7 +879,7 @@ return {
             g.textContent = st.label
             document.body.appendChild(g)
             ghostRef.current = g
-            setDragWid(st.wid)
+            if (st.kind === 'session') setDragSid(st.id); else setDragWid(st.id)
           }
           const gh = ghostRef.current
           if (gh !== null) gh.style.transform = 'translate(' + (e.clientX + 12) + 'px,' + (e.clientY + 10) + 'px)'
@@ -856,11 +894,11 @@ return {
         function onUp(e) { finish(e.clientX, e.clientY, false) }
         function onKey(e) { if (e.key === 'Escape') finish(0, 0, true) }
         dragHandlersRef.current = {
-          begin: (wid, label, e) => {
+          begin: (kind, id, label, e) => {
             if (e.button !== 0) return
             const target = e.target
             if (target !== null && target.closest !== undefined && target.closest('button,input,a,textarea') !== null) return
-            dragRef.current = { wid: wid, label: label, x: e.clientX, y: e.clientY, active: false }
+            dragRef.current = { kind: kind, id: id, label: label, x: e.clientX, y: e.clientY, active: false }
             document.addEventListener('mousemove', onMove, true)
             document.addEventListener('mouseup', onUp, true)
             document.addEventListener('keydown', onKey, true)

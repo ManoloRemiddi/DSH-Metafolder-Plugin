@@ -1,14 +1,15 @@
 # DSH Metafolder Plugin
 
-Visual **meta-folders** for the DeepSeek Harness sidebar.
+Visual and Host-backed **meta-folders** for the DeepSeek Harness sidebar.
 
-Nest real workspace folders under named, collapsible groups — for example every
-Resonant OS project under one "Resonant OS" meta folder. It changes **only how
-the folders are visualised**:
+Nest real workspace folders and individual sessions under named, collapsible groups — for example every
+Resonant OS project under one "Resonant OS" meta folder. The safe organization layer changes how
+sessions and workspace folders are visualised and persists through an optional Host service, with a
+localStorage compatibility fallback:
 
-- workspace paths, permissions, sessions and session order are untouched;
-- grouping is display-only and persists in the browser (`localStorage` document
-  `dsh.wsmeta.v1`), never in the Host workspace registry;
+- workspace paths, permissions, and session working directories are untouched;
+- workspace and session grouping is metadata-only and can be stored by the Host;
+- physical workspace moves remain guarded until DSH exposes a supported path-migration API;
 - ungrouping returns a folder to the main list unchanged;
 - the AI's permissions stay attached to the real folder, because the real folder
   is what the plugin renders.
@@ -16,8 +17,12 @@ the folders are visualised**:
 ## Features
 
 - **Meta-folders** over the real workspace rows, with per-folder session counts.
-- **Drag and drop**: drag a workspace row onto a meta folder to file it; drop it
-  on the list background to take it out again.
+- **Drag and drop**: drag a workspace or session row onto a meta folder to file it;
+  drop it on the list background to take it out again.
+- **Host-backed assignments**: when the optional `remote.metafolder` service is present,
+  assignments persist through the Host; older compositions retain the localStorage fallback.
+- **Physical move boundary**: actual workspace/project moves are intentionally guarded until
+  DSH provides a workspace/session migration API or a dedicated atomic Host capability.
 - **Row menu**: `→ <meta folder>` to file, `Remove from meta folder` to unfile,
   plus rename / move up / move down, and delete workspace.
 - **Per-folder colour**: pick it when you create the folder — an eight-swatch
@@ -102,5 +107,8 @@ so uninstalling never touches a workspace.
 - `@deepseek-ai/dsh-client-ui-sidebar` — owner share `{ wide, expandSidebar }`.
 - `@deepseek-ai/dsh-api-workspace-controller` / `dsh-api-session-controller` —
   workspace and session service methods and snapshot shapes.
+- DSH physical move boundary: the remaining work for true physical moves requires an
+  upstream DSH workspace/session migration API or a dedicated Host capability that atomically
+  updates the filesystem, workspace registry, and session metadata.
 
 MIT © 2026 Manolo Remiddi
