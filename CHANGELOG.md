@@ -4,6 +4,17 @@ All notable changes to this plugin. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1] — 2026-09-13
+
+- Include the locally used directory browser: navigate folders, show hidden
+  folders, return home, and fall back to a native picker when unavailable.
+- Fix a web boot hang by treating the optional Metafolder Remote namespace as
+  optional instead of a required dependency.
+- Include workspace and session grouping from the unreleased 1.2.0 source.
+- Document the actual storage boundary: browser localStorage is the persistence
+  mechanism; the optional Host service is in-memory only.
+- Add a ready-to-install GitHub package and directory-picker regression checks.
+
 ## [1.1.0] — 2026-09-10
 
 ### Added

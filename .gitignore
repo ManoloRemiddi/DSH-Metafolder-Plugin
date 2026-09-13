@@ -4,3 +4,6 @@ node_modules/
 # Local noise
 *.log
 .DS_Store
+
+# Packaged release artifacts
+*.tgz

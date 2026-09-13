@@ -38,7 +38,12 @@ ${body}
 		// ---- end client.js ----
 
 		exports.name = "${ID}";
-		exports.inject = ['slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'remote.metafolder', 'layout'];
+		// 'remote.metafolder' is deliberately NOT required: a Remote namespace
+		// exists only once a generated Client contribution mounts it, and no
+		// package provides 'metafolder' in this DSH build. Requiring it left this
+		// fiber 'pending' forever, which failed the entire web boot. The client
+		// reads the namespace optionally and falls back to localStorage.
+		exports.inject = ['slots', 'sessions', 'workspaces', 'locale', 'remote', 'remote.directoryPicker', 'layout'];
 		exports.apply = plugin.apply;
 		return module.exports;
 	},

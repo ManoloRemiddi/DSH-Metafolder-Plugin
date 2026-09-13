@@ -17,7 +17,11 @@ return {
 
     const LS_META = 'dsh.wsmeta.v1'
     const LS_SHIPPED = 'dsh.workspace.view.v5'
-    const META_REMOTE = ctx.remote !== undefined ? ctx.remote.metafolder : undefined
+    // Optional Host persistence. Read through ctx.get so an unmounted
+    // namespace returns undefined instead of throwing, and never list
+    // 'remote.metafolder' as a required inject: no package mounts that
+    // namespace in this DSH build, and requiring it hung the web boot.
+    const META_REMOTE = ctx.get('remote.metafolder')
     const LIMIT5 = 5
     const SEARCH_MS = 250
     // Curated meta-folder colours: mid-tone hues that stay legible on both the
@@ -43,7 +47,9 @@ return {
         newWorkspaceHint: 'The folder must already exist on the host. The new workspace opens a session and is filed into the meta folder.',
         workspacePath: 'Workspace folder path',
         workspacePathPlaceholder: '/home/you/projects/my-project',
-        browse: 'Browse…',
+        browse: 'Browse…', home: 'Home', parentFolder: 'Up one folder',
+        folderList: 'Folders', emptyDirectory: 'No subfolders', showHidden: 'Show hidden folders',
+        truncatedFolders: 'Some folders are omitted. Enter their full path above.',
         pickerUnavailable: 'No directory picker is available in this composition.',
       },
       zh: {
@@ -63,7 +69,9 @@ return {
         newWorkspaceHint: '该文件夹必须已存在。新工作区会打开一个会话并归入该分组。',
         workspacePath: '工作区文件夹路径',
         workspacePathPlaceholder: '/home/you/projects/my-project',
-        browse: '浏览…',
+        browse: '浏览…', home: '主目录', parentFolder: '上一级',
+        folderList: '文件夹', emptyDirectory: '没有子文件夹', showHidden: '显示隐藏文件夹',
+        truncatedFolders: '部分文件夹未显示。请在上方输入完整路径。',
         pickerUnavailable: '当前组合中没有可用的目录选择器。',
       },
     }
@@ -420,19 +428,38 @@ return {
       const [value, setValue] = useState('')
       const [busy, setBusy] = useState(false)
       const [err, setErr] = useState(null)
-      function browse() {
+      const [listing, setListing] = useState(null)
+      const [showHidden, setShowHidden] = useState(false)
+      async function browse(path) {
         const picker = ctx.remote !== undefined ? ctx.remote.directoryPicker : undefined
-        if (picker === undefined || typeof picker.pick !== 'function') { setErr(tm('pickerUnavailable')); return }
+        if (picker === undefined) { setErr(tm('pickerUnavailable')); return }
         setErr(null); setBusy(true)
-        Promise.resolve(picker.pick()).then((result) => {
-          setBusy(false)
-          if (result === undefined || result.ok !== true) {
-            const msg = result !== undefined && result.error !== undefined && result.error.message !== undefined ? String(result.error.message) : tm('pickerUnavailable')
-            if (msg.toLowerCase().indexOf('cancel') === -1) setErr(msg)
-            return
+        try {
+          // Background/remote hosts supply list(), not a native OS dialog.
+          // Only an unavailable capability warrants trying the native verb;
+          // unreadable paths and other failures must remain visible.
+          if (typeof picker.list === 'function') {
+            const result = await picker.list(path)
+            if (result !== undefined && result.ok === true) {
+              setListing(result.value)
+              setValue(result.value.path)
+              return
+            }
+            if (!result || !result.error || result.error.code !== 'directory-picker/unavailable') {
+              throw new Error(result && result.error && result.error.message || tm('pickerUnavailable'))
+            }
+          }
+          if (typeof picker.pick !== 'function') throw new Error(tm('pickerUnavailable'))
+          const result = await picker.pick()
+          if (!result || result.ok !== true) {
+            throw new Error(result && result.error && result.error.message || tm('pickerUnavailable'))
           }
           if (result.value !== null && result.value !== undefined) setValue(result.value)
-        }, (r) => { setBusy(false); setErr(r instanceof Error ? r.message : String(r)) })
+        } catch (reason) {
+          setErr(reason instanceof Error ? reason.message : String(reason))
+        } finally {
+          setBusy(false)
+        }
       }
       function confirm() {
         const trimmed = value.trim()
@@ -454,7 +481,18 @@ return {
             onChange: (e) => setValue(e.target.value),
             onKeyDown: (e) => { if (e.key === 'Enter') { e.preventDefault(); confirm() } },
           }),
-          h('button', { type: 'button', className: 'wsg-obtn', disabled: busy, onClick: browse }, tm('browse'))),
+          h('button', { type: 'button', className: 'wsg-obtn', disabled: busy, onClick: () => browse(value.trim() || undefined) }, tm('browse'))),
+        listing !== null ? h('div', { className: 'wsg-folderbrowser' },
+          h('div', { className: 'wsg-pathrow' },
+            h('button', { type: 'button', className: 'wsg-obtn', disabled: busy, onClick: () => browse(listing.home) }, tm('home')),
+            h('button', { type: 'button', className: 'wsg-obtn', disabled: busy || listing.crumbs.length < 2,
+              onClick: () => browse(listing.crumbs[listing.crumbs.length - 2].path) }, tm('parentFolder')),
+            h('label', null, h('input', { type: 'checkbox', checked: showHidden, onChange: (e) => setShowHidden(e.target.checked) }), tm('showHidden'))),
+          h('div', { role: 'group', 'aria-label': tm('folderList'), style: { maxHeight: '240px', overflowY: 'auto', display: 'grid', gap: '4px', marginTop: '8px' } },
+            listing.entries.filter((entry) => showHidden || !entry.hidden).map((entry) =>
+              h('button', { key: entry.path, type: 'button', className: 'wsg-obtn', disabled: busy, style: { textAlign: 'left' }, onClick: () => browse(entry.path) }, entry.name)),
+            listing.entries.filter((entry) => showHidden || !entry.hidden).length === 0 ? h('div', { className: 'wsg-mdesc' }, tm('emptyDirectory')) : null),
+          listing.truncated ? h('div', { className: 'wsg-mdesc' }, tm('truncatedFolders')) : null) : null,
         props.hint !== undefined ? h('div', { className: 'wsg-mdesc' }, props.hint) : null,
         err !== null ? h('div', { className: 'wsg-merr', role: 'alert' }, err) : null)
     }

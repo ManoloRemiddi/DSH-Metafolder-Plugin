@@ -1,14 +1,14 @@
 # DSH Metafolder Plugin
 
-Visual and Host-backed **meta-folders** for the DeepSeek Harness sidebar.
+Visual **meta-folders** for the DeepSeek Harness sidebar.
 
 Nest real workspace folders and individual sessions under named, collapsible groups — for example every
 Resonant OS project under one "Resonant OS" meta folder. The safe organization layer changes how
-sessions and workspace folders are visualised and persists through an optional Host service, with a
-localStorage compatibility fallback:
+sessions and workspace folders are visualised and persists in this browser’s localStorage. An optional Host integration exists,
+but durable Host storage and cross-device sync are not implemented:
 
 - workspace paths, permissions, and session working directories are untouched;
-- workspace and session grouping is metadata-only and can be stored by the Host;
+- workspace and session grouping is metadata-only;
 - physical workspace moves remain guarded until DSH exposes a supported path-migration API;
 - ungrouping returns a folder to the main list unchanged;
 - the AI's permissions stay attached to the real folder, because the real folder
@@ -19,8 +19,9 @@ localStorage compatibility fallback:
 - **Meta-folders** over the real workspace rows, with per-folder session counts.
 - **Drag and drop**: drag a workspace or session row onto a meta folder to file it;
   drop it on the list background to take it out again.
-- **Host-backed assignments**: when the optional `remote.metafolder` service is present,
-  assignments persist through the Host; older compositions retain the localStorage fallback.
+- **Local assignments**: groups and assignments survive page reloads in the same
+  browser. Clearing browser storage removes them. The optional Host service uses
+  memory only; it is not durable storage or cross-device sync.
 - **Physical move boundary**: actual workspace/project moves are intentionally guarded until
   DSH provides a workspace/session migration API or a dedicated atomic Host capability.
 - **Row menu**: `→ <meta folder>` to file, `Remove from meta folder` to unfile,
@@ -53,7 +54,7 @@ One package, two halves:
 
 | file | role |
 | --- | --- |
-| `lib/index.js` | host half — registers nothing; mounting it is what makes the client-module scan read `dsh.client` |
+| `lib/index.js` | host half — optional in-memory service; mounting it enables the client-module scan |
 | `lib/client.js` | browser half — shadows the `sidebar.workspaces` seat and renders the meta-folder browser |
 | `client.js` | **source of truth** (dynamic-Cordis form, also usable with the `cordis_define` runtime tool) |
 
@@ -64,24 +65,25 @@ editing:
 npm run check     # build + syntax + export smoke test
 ```
 
-### As a web-profile package
+### Download and install
+
+[Download version 1.2.1](https://github.com/ManoloRemiddi/DSH-Metafolder-Plugin/releases/tag/v1.2.1).
+The `.tgz` asset is ready to install; no build or manual symlink is needed:
 
 ```sh
-ln -s "/path/to/DSH-Metafolder-Plugin" \
-      ~/.dsh/profiles/web/node_modules/dsh-metafolder-plugin
+dsh plugin --profile web add https://github.com/ManoloRemiddi/DSH-Metafolder-Plugin/releases/download/v1.2.1/dsh-metafolder-plugin-1.2.1.tgz
 ```
 
-then add to `~/.dsh/profiles/web/cordis.patch.yml`:
+Finish any running tasks, restart your existing DSH process, and reload its web
+page. Use your actual profile if it is not `web`. The shipped sidebar and workspace
+packages must be present. This release was checked with DSH 0.1.5-rc.1; newer
+releases may change the UI interfaces it uses.
 
-```yaml
-- insert:
-    - id: metafolder-plugin
-      name: 'dsh-metafolder-plugin'
-```
+For an existing manual symlink installation, update that checkout to `v1.2.1`
+and keep its existing registration. Do not add a second copy or duplicate patch row.
 
-Restart `dsh web`. The module graph is composed at boot, so a page reload alone
-will not pick up a code change (and `client-hmr` is commonly disabled to avoid
-per-tab SSE connection exhaustion).
+For development, clone the repository and run `npm run check` and `npm test`.
+The built browser file is included in both the repository and the release.
 
 > **Registration note:** a `single` slot takes one registration per priority and
 > the lowest renders, so the seat is registered with `priority: -1` to shadow
@@ -89,16 +91,25 @@ per-tab SSE connection exhaustion).
 > *"already has a registration at priority 0 … register at a different priority
 > to shadow it"*.
 
-### Revert
+### Remove
 
-Remove the `insert` row and the symlink, then restart `dsh web`:
+For a CLI installation:
 
 ```sh
-rm ~/.dsh/profiles/web/node_modules/dsh-metafolder-plugin
+dsh plugin --profile web remove dsh-metafolder-plugin
 ```
 
-Your groups stay in `localStorage` under `dsh.wsmeta.v1` until you clear them,
-so uninstalling never touches a workspace.
+For the older manual installation, remove only its `metafolder-plugin` insert
+row and its package symlink. Restart DSH and reload the page. Groups stay under
+`dsh.wsmeta.v1` in localStorage; uninstalling does not move workspace files.
+
+## Support and related plugins
+
+[Report a problem](https://github.com/ManoloRemiddi/DSH-Metafolder-Plugin/issues)
+with your DSH version, browser version, install method and reproduction steps.
+Do not attach credentials or private session logs.
+
+Browse the [DeepSeek Harness Plugins collection](https://github.com/ManoloRemiddi/deepseek-harness-plugins).
 
 ## Verified against
 
